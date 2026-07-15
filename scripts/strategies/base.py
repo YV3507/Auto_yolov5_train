@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-logger = logging.getLogger('yolov5_trainer')
+logger = logging.getLogger(__name__)
 
 
 class VersionStrategy(ABC):
@@ -53,8 +53,8 @@ class VersionStrategy(ABC):
         import sys
         cmd = [
             sys.executable, "train.py",
-            '--img', str(config.TRAINING['img_size']),
-            '--batch', str(config.TRAINING['batch_size']),
+            '--img', str(config.TRAINING['imgsz']),
+            '--batch', str(config.TRAINING['batch']),
             '--epochs', str(config.TRAINING['epochs']),
             '--data', str(config.PATHS['project_dir'] / 'data.yaml'),
             '--cfg', self._get_model_config_path(yolov5_path, config.TRAINING['model']),

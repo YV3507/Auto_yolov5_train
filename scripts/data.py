@@ -13,7 +13,7 @@ from pathlib import Path
 
 import yaml
 
-logger = logging.getLogger('yolov5_trainer')
+logger = logging.getLogger(__name__)
 
 
 # ==================== 路径管理 ====================
@@ -152,6 +152,14 @@ def generate_classes_from_labels(labels_dir: Path) -> list[str]:
     return [f'class{i}' for i in sorted(ids)]
 
 
+def _collect_image_files(images_dir: Path) -> list[Path]:
+    """收集目录中所有支持的图片文件"""
+    image_files: list[Path] = []
+    for ext in ['*.jpg', '*.jpeg', '*.png', '*.bmp']:
+        image_files.extend(images_dir.glob(ext))
+    return image_files
+
+
 def split_dataset(
     images_dir: Path,
     output_dir: Path,
@@ -167,17 +175,14 @@ def split_dataset(
     1. 支持 test_ratio（原代码完全忽略了它）
     2. 使用 round + 补足方式，避免整数截断导致数据丢失
     """
-    # 收集所有图片
-    image_files: list[Path] = []
-    for ext in ['*.jpg', '*.jpeg', '*.png', '*.bmp']:
-        image_files.extend(images_dir.glob(ext))
+    image_files = _collect_image_files(images_dir)
 
     if not image_files:
         raise FileNotFoundError(f"在 {images_dir} 中未找到图片文件")
 
-    # 随机打乱
-    random.seed(seed)
-    random.shuffle(image_files)
+    # 使用独立的 Random 实例，避免全局随机状态污染
+    rng = random.Random(seed)
+    rng.shuffle(image_files)
 
     total = len(image_files)
 
@@ -245,6 +250,33 @@ def create_data_yaml(project_dir: Path, classes_file: Path) -> Path:
     return yaml_file
 
 
+def _ensure_classes_file_txt(
+    classes_file: Path,
+    labels_dir: Path,
+) -> list[str]:
+    """
+    确保存在 classes.txt（TXT 格式时使用）
+
+    从 labels_dir 中查找 classes.txt 作为类别名来源，
+    若不存在则从标注文件推断类别 ID 并生成默认名。
+
+    Returns:
+        类别名列表
+    """
+    labels_classes = labels_dir / "classes.txt"
+    if labels_classes.exists():
+        with open(labels_classes, 'r', encoding='utf-8') as f:
+            classes = [line.strip() for line in f if line.strip()]
+        if classes:
+            write_classes_file(classes_file, classes)
+            return classes
+        logger.warning(f"{labels_classes} 为空文件")
+
+    class_list = generate_classes_from_labels(labels_dir)
+    write_classes_file(classes_file, class_list)
+    return class_list
+
+
 def prepare_data(
     images_dir: Path,
     labels_dir: Path,
@@ -267,19 +299,17 @@ def prepare_data(
         classes = convert_xml_to_yolo(labels_dir)
         if classes:
             write_classes_file(classes_file, classes)
-        else:
-            logger.warning("XML 转换未产生类别，尝试从已有 TXT 标注生成")
+        elif not classes_file.exists():
+            # XML 转换未产生类别，从 TXT 标注推断
+            class_list = generate_classes_from_labels(labels_dir)
+            write_classes_file(classes_file, class_list)
     elif annotation_format == 'txt':
-        logger.info("使用 YOLO TXT 格式标注，无需转换")
+        if not classes_file.exists():
+            _ensure_classes_file_txt(classes_file, labels_dir)
+        else:
+            logger.info(f"类别文件已存在: {classes_file}")
     else:
         raise ValueError(f"不支持的标注格式: {annotation_format}")
-
-    # 生成类别文件（如果还不存在）
-    if not classes_file.exists():
-        class_list = generate_classes_from_labels(labels_dir)
-        write_classes_file(classes_file, class_list)
-    else:
-        logger.info(f"类别文件已存在: {classes_file}")
 
     # 划分数据集
     split_dataset(

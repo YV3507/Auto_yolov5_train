@@ -1,5 +1,5 @@
 """
-v6.0+ 版本策略
+YOLOv5 v6.0+ 版本策略
 
 训练参数传递方式：
   - 所有超参通过命令行参数直接传递
@@ -14,7 +14,7 @@ from typing import Optional
 
 from .base import VersionStrategy
 
-logger = logging.getLogger('yolov5_trainer')
+logger = logging.getLogger(__name__)
 
 
 class V6PlusStrategy(VersionStrategy):
@@ -29,9 +29,18 @@ class V6PlusStrategy(VersionStrategy):
         cmd = self._build_base_command(config, yolov5_path, weights_path)
 
         cmd.extend(['--patience', str(config.TRAINING['patience'])])
-        cmd.extend(config.get_optimizer_cli_args())
-        cmd.extend(config.get_augmentation_cli_args())
+        cmd.extend(self._dict_to_cli_args(config.OPTIMIZER))
+        cmd.extend(self._dict_to_cli_args(config.AUGMENTATION))
         cmd.extend(['--cache', 'ram'])
 
         logger.info(f"YOLOv5 v{config.YOLO_VERSION}：使用命令行参数配置训练")
         return cmd
+
+    @staticmethod
+    def _dict_to_cli_args(d: dict) -> list[str]:
+        """将配置 dict 转换为 --key value 格式的 CLI 参数列表"""
+        result = []
+        for key, value in d.items():
+            result.append(f'--{key}')
+            result.append(str(value))
+        return result

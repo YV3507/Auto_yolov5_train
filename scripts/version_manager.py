@@ -32,7 +32,7 @@ from typing import Optional
 import requests
 from tqdm import tqdm
 
-logger = logging.getLogger('yolov5_trainer')
+logger = logging.getLogger(__name__)
 
 REPO_URL = "https://github.com/ultralytics/yolov5.git"
 DEFAULT_CACHE_ROOT = Path.home() / ".cache" / "yolov5"
@@ -217,4 +217,39 @@ def ensure_weights(
         logger.error(f"下载权重失败: {e}")
         if weights_path.exists():
             weights_path.unlink()
+        return None
+
+
+def ensure_ultralytics_weights(model_name: str, weights_dir: Path) -> Optional[str]:
+    """
+    获取 Ultralytics 体系预训练权重，下载到项目 weights/ 目录。
+
+    利用 Ultralytics 内置的 attempt_download_asset 下载模型权重，
+    使 Ultralytics 模型的权重与 YOLOv5 模型统一存放在项目 weights/ 目录下，
+    便于统一管理和离线复用。
+
+    Args:
+        model_name: 模型文件名，如 'yolov8n.pt' / 'yolo11m.pt'
+        weights_dir: 权重存放目录，如 cfg.PATHS['weights_dir']
+
+    Returns:
+        权重文件的绝对路径字符串，或 None（下载失败）
+    """
+    from ultralytics.utils.downloads import attempt_download_asset
+
+    target = weights_dir / model_name
+    if target.exists():
+        logger.info(f"预训练权重已存在: {target}")
+        return str(target)
+
+    logger.info(f"正在下载 Ultralytics 模型: {model_name}")
+    try:
+        result = attempt_download_asset(str(target))
+        if Path(result).exists():
+            logger.info(f"权重下载完成: {result}")
+            return result
+        logger.error(f"下载后文件未找到: {result}")
+        return None
+    except Exception as e:
+        logger.error(f"下载 Ultralytics 权重失败: {e}")
         return None

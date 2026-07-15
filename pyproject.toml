@@ -1,24 +1,23 @@
 [project]
 name = "auto-yolov5-train"
 version = "1.0.0"
-description = "YOLOv5 自动化训练管道"
+description = "YOLOv5 / Ultralytics 自动化训练管道"
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "requests>=2.23.0",
     "tqdm>=4.64.0",
-    "PyYAML>=5.3.1",
+    "pyyaml>=5.3.1",
 ]
 
 [project.optional-dependencies]
 # YOLOv5 训练依赖（当使用 uv sync 安装训练环境时启用）
 train = [
-    "torch>=1.7.0",
-    "torchvision>=0.8.1",
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
     "opencv-python>=4.1.1",
     "matplotlib>=3.2.2",
     "numpy>=1.18.5",
     "Pillow>=7.1.2",
-    "PyYAML>=5.3.1",
     "scipy>=1.4.1",
     "thop>=0.1.1",
     "tqdm>=4.64.0",
@@ -30,9 +29,25 @@ train = [
     "ipython",
 ]
 
-[tool.uv]
-# uv 工具配置，参考 https://docs.astral.sh/uv/
+# Ultralytics 体系依赖（YOLOv8/v10/v11）
+ultralytics = [
+    "ultralytics>=8.0.0",
+]
 
+# ==================== uv 工具配置 ====================
+
+[tool.uv]
+# 默认激活的 optional groups（空 = 仅安装核心依赖）
+# 用户可追加: uv sync --group train --group ultralytics
+default-groups = []
+
+# PyTorch CUDA 索引（显式引用，不影响其他包的默认源）
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+# 指定 torch/torchvision 从 CUDA 索引安装
 [tool.uv.sources]
-# 如果使用 PyTorch 官方源，可以在此添加 index-url 配置
-# 默认从 PyPI 安装，如需 CUDA 版本请参考下方注释
+torch = [{ index = "pytorch-cu121" }]
+torchvision = [{ index = "pytorch-cu121" }]

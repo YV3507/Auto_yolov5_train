@@ -1,0 +1,42 @@
+# Conda 环境配置文件 —— 与 pyproject.toml 保持依赖同步
+# 使用方法：
+#   conda env create -f environment.yml
+#   conda activate auto_yolov5_train
+#
+# 如需 GPU 训练，请手动安装 CUDA 版 PyTorch：
+#   pip install torch==2.1.0 torchvision==0.16.0 --index-url https://download.pytorch.org/whl/cu121
+#
+# 如需 Ultralytics 训练（YOLOv8/v10/v11）：
+#   pip install ultralytics>=8.0.0
+
+name: auto_yolov5_train
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  # Python 版本锁定
+  - python>=3.10,<3.13
+
+  # 管道核心依赖（与 pyproject.toml [dependencies] 同步）
+  - pip
+  - requests>=2.23.0
+  - tqdm>=4.64.0
+  - pyyaml>=5.3.1
+
+  # YOLOv5 训练依赖（与 pyproject.toml [project.optional-dependencies.train] 同步）
+  # 注意：torch/torchvision 请通过 pip 安装 CUDA 版本（见上方注释）
+  - opencv-python>=4.1.1
+  - matplotlib>=3.2.2
+  - numpy>=1.18.5
+  - pillow>=7.1.2
+  - scipy>=1.4.1
+  - tensorboard>=2.4.1
+  - pandas>=1.1.4
+  - seaborn>=0.11.0
+  - psutil
+  - gitpython
+  - ipython
+
+  # pip 安装的依赖（conda-forge 中没有或版本过旧）
+  - pip:
+    - thop>=0.1.1

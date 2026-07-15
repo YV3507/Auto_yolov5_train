@@ -50,45 +50,6 @@ class V5Strategy(VersionStrategy):
 
     # ==================== hyp 文件管理 ====================
 
-    def _generate_hyp_content(self, config) -> str:
-        """生成 hyp.yaml 内容"""
-        o = config.OPTIMIZER
-        a = config.AUGMENTATION
-        return f"""# YOLOv5 Hyperparameters (generated)
-# Optimizer
-lr0: {o['lr0']}
-lrf: {o['lrf']}
-momentum: {o['momentum']}
-weight_decay: {o['weight_decay']}
-warmup_epochs: {o['warmup_epochs']}
-warmup_momentum: {o['warmup_momentum']}
-warmup_bias_lr: {o['warmup_bias_lr']}
-
-# Augmentation
-hsv_h: {a['hsv_h']}
-hsv_s: {a['hsv_s']}
-hsv_v: {a['hsv_v']}
-degrees: {a['degrees']}
-translate: {a['translate']}
-scale: {a['scale']}
-shear: {a['shear']}
-perspective: {a['perspective']}
-flipud: {a['flipud']}
-fliplr: {a['fliplr']}
-mosaic: {a['mosaic']}
-mixup: {a['mixup']}
-
-# Loss
-box: 0.05
-cls: 0.5
-cls_pw: 1.0
-obj: 1.0
-obj_pw: 1.0
-iou_t: 0.20
-anchor_t: 4.0
-fl_gamma: 0.0
-"""
-
     def _create_hyp_file(self, config, yolov5_path: Path) -> Optional[Path]:
         """创建或定位 hyp 文件"""
         default_hyp = yolov5_path / "data" / "hyp.scratch.yaml"
@@ -99,6 +60,6 @@ fl_gamma: 0.0
         hyp_file = config.PATHS['project_dir'] / 'hyp.custom.yaml'
         hyp_file.parent.mkdir(parents=True, exist_ok=True)
         with open(hyp_file, 'w', encoding='utf-8') as f:
-            f.write(self._generate_hyp_content(config))
+            f.write(config.generate_hyp_yaml_content())
         logger.info(f"创建自定义 hyp 文件: {hyp_file}")
         return hyp_file

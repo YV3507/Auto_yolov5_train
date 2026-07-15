@@ -40,29 +40,18 @@ DEFAULT_CACHE_ROOT = Path.home() / ".cache" / "yolov5"
 
 # ==================== 权重下载信息 ====================
 
-WEIGHTS_INFO: dict[str, dict[str, str]] = {
-    'yolov5s.pt': {
-        '5.0': 'https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5s.pt',
-        '6.0': 'https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5s.pt',
-        '6.1': 'https://github.com/ultralytics/yolov5/releases/download/v6.1/yolov5s.pt',
-        '7.0': 'https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5s.pt',
-    },
-    'yolov5m.pt': {
-        '5.0': 'https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5m.pt',
-        '6.0': 'https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5m.pt',
-        '7.0': 'https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5m.pt',
-    },
-    'yolov5l.pt': {
-        '5.0': 'https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5l.pt',
-        '6.0': 'https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5l.pt',
-        '7.0': 'https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5l.pt',
-    },
-    'yolov5x.pt': {
-        '5.0': 'https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5x.pt',
-        '6.0': 'https://github.com/ultralytics/yolov5/releases/download/v6.0/yolov5x.pt',
-        '7.0': 'https://github.com/ultralytics/yolov5/releases/download/v7.0/yolov5x.pt',
-    },
+# 每个模型支持的版本列表（URL 按规则自动生成）
+AVAILABLE_WEIGHTS: dict[str, list[str]] = {
+    'yolov5s.pt': ['5.0', '6.0', '6.1', '7.0'],
+    'yolov5m.pt': ['5.0', '6.0', '7.0'],
+    'yolov5l.pt': ['5.0', '6.0', '7.0'],
+    'yolov5x.pt': ['5.0', '6.0', '7.0'],
 }
+
+
+def _generate_weight_url(model_type: str, version: str) -> str:
+    """根据模型类型和版本生成下载 URL"""
+    return f"https://github.com/ultralytics/yolov5/releases/download/v{version}/{model_type}"
 
 WEIGHTS_CACHE_DIR = DEFAULT_CACHE_ROOT / "weights"
 
@@ -159,22 +148,28 @@ def _download_with_progress(url: str, dest: Path, desc: str) -> None:
             pb.update(len(chunk))
 
 
+def _parse_version(v: str) -> tuple[int, ...]:
+    """将版本号字符串解析为数值元组，用于语义化比较"""
+    return tuple(int(x) for x in v.split("."))
+
+
 def _find_download_url(model_type: str, version: str) -> Optional[str]:
     """
     查找最适合的权重下载 URL
 
     策略：精确版本匹配 → 最近的高版本 fallback → 最大版本
     """
-    info = WEIGHTS_INFO.get(model_type)
-    if not info:
+    available = AVAILABLE_WEIGHTS.get(model_type)
+    if not available:
         return None
-    if version in info:
-        return info[version]
-    available = sorted(info.keys(), key=lambda v: tuple(map(int, v.split('.'))))
-    for v in available:
-        if v >= version:
-            return info[v]
-    return info.get(available[-1]) if available else None
+    if version in available:
+        return _generate_weight_url(model_type, version)
+    sorted_versions = sorted(available, key=_parse_version)
+    parsed_version = _parse_version(version)
+    for v in sorted_versions:
+        if _parse_version(v) >= parsed_version:
+            return _generate_weight_url(model_type, v)
+    return _generate_weight_url(model_type, sorted_versions[-1]) if sorted_versions else None
 
 
 def ensure_weights(

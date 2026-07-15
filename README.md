@@ -38,8 +38,8 @@ auto_yolov5_train/
 │       └── v6plus.py           # v6.0+/v7.0 策略（全命令行参数）
 │
 ├── data/                       # 数据目录（克隆后自动存在）
-│   └── .gitkeep                # 占位文件，使 Git 跟踪空目录
-│   └── raw/                    # 用户原始数据，不提交版本库
+│   └── .gitkeep                # 占位文件
+│   └── raw/                    # 用户原始数据
 │       ├── images/             # 图片文件（.jpg / .png）
 │       └── labels/             # 标注文件（YOLO .txt 或 VOC .xml）
 │
@@ -51,7 +51,7 @@ auto_yolov5_train/
 │
 ├── weights/                    # 预训练权重缓存
 │
-├── training.log                # 管道运行日志
+├── training.log                # [运行中生成]管道运行日志
 ```
 
 ---
@@ -263,7 +263,7 @@ YOLOv5 代码库采用**双模式**缓存（[VersionManager](file:///d:/auto_yol
 
 ### Q: 网络不好，YOLOv5 代码下载失败？
 
-方案一：手动将 YOLOv5 代码克隆到对应目录：
+手动将 YOLOv5 代码克隆到对应目录：
 
 ```bash
 git clone --depth 1 --branch v7.0 https://github.com/ultralytics/yolov5.git yolov5/v7.0

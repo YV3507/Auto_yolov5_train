@@ -1,6 +1,10 @@
 """
 YOLOv5 版本策略注册
 通过 STRATEGY_MAP 实现版本 → 策略的多态分发，无需 if/else 分支。
+
+使用约定：
+  - 添加新版本时只需在 STRATEGY_MAP 中添加一行，
+    同时在 scripts.config.YOLOv5Config.ALLOWED_VERSIONS 中添加对应版本。
 """
 
 from __future__ import annotations
@@ -25,3 +29,6 @@ def get_strategy(version: str) -> VersionStrategy:
             f"不支持的 YOLOv5 版本: {version}，可选: {list(STRATEGY_MAP.keys())}"
         )
     return cls()
+
+
+

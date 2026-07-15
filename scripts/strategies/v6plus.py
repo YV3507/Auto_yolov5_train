@@ -29,43 +29,9 @@ class V6PlusStrategy(VersionStrategy):
         cmd = self._build_base_command(config, yolov5_path, weights_path)
 
         cmd.extend(['--patience', str(config.TRAINING['patience'])])
-        cmd.extend(self._get_optimizer_args(config))
-        cmd.extend(self._get_augmentation_args(config))
+        cmd.extend(config.get_optimizer_cli_args())
+        cmd.extend(config.get_augmentation_cli_args())
         cmd.extend(['--cache', 'ram'])
 
         logger.info(f"YOLOv5 v{config.YOLO_VERSION}：使用命令行参数配置训练")
         return cmd
-
-    # ==================== 参数辅助方法 ====================
-
-    def _get_optimizer_args(self, config) -> list[str]:
-        """获取优化器参数列表"""
-        o = config.OPTIMIZER
-        return [
-            '--optimizer', o['optimizer'],
-            '--lr0', str(o['lr0']),
-            '--lrf', str(o['lrf']),
-            '--momentum', str(o['momentum']),
-            '--weight_decay', str(o['weight_decay']),
-            '--warmup_epochs', str(o['warmup_epochs']),
-            '--warmup_momentum', str(o['warmup_momentum']),
-            '--warmup_bias_lr', str(o['warmup_bias_lr']),
-        ]
-
-    def _get_augmentation_args(self, config) -> list[str]:
-        """获取数据增强参数列表"""
-        a = config.AUGMENTATION
-        return [
-            '--hsv_h', str(a['hsv_h']),
-            '--hsv_s', str(a['hsv_s']),
-            '--hsv_v', str(a['hsv_v']),
-            '--degrees', str(a['degrees']),
-            '--translate', str(a['translate']),
-            '--scale', str(a['scale']),
-            '--shear', str(a['shear']),
-            '--perspective', str(a['perspective']),
-            '--flipud', str(a['flipud']),
-            '--fliplr', str(a['fliplr']),
-            '--mosaic', str(a['mosaic']),
-            '--mixup', str(a['mixup']),
-        ]
